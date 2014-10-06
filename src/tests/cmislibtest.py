@@ -164,7 +164,7 @@ class QueryTest(CmisTestBase):
         testFile.close()
         self._maxFullTextTries = settings.MAX_FULL_TEXT_TRIES
 
-    def testSimpleSelect(self):
+    def disable_testSimpleSelect(self):
         """Execute simple select star from cmis:document"""
         querySimpleSelect = "SELECT * FROM cmis:document"
         resultSet = self._repo.query(querySimpleSelect)
@@ -931,7 +931,7 @@ class DocumentTest(CmisTestBase):
             self.assert_('cmis:objectId' in newDoc.getProperties())
             self.assert_('cmis:objectId' in pwcDoc.getProperties())
         finally:
-            pwcDoc.delete()
+            pwcDoc.cancelCheckout()
         self.assertFalse(newDoc.isCheckedOut())
 
     def testDeleteDocument(self):

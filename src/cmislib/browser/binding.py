@@ -1887,7 +1887,7 @@ class BrowserDocument(BrowserCmisObject):
             return None
 
         contentUrl = self._repository.getRootFolderUrl() + "?objectId=" + self.getObjectId() + "&selector=content"
-        result, content = self.rest.get(contentUrl.encode('utf-8'),
+        result, content = self._cmisClient.binding.rest.get(contentUrl.encode('utf-8'),
                                      self._cmisClient.username,
                                      self._cmisClient.password,
                                      **self._cmisClient.extArgs)

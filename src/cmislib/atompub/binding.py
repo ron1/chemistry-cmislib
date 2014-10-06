@@ -2512,7 +2512,7 @@ class AtomPubDocument(AtomPubCmisObject):
             srcUrl = contentElements[0].attributes['src'].value
 
             # the cmis client class parses non-error responses
-            result, content = Rest().get(srcUrl.encode('utf-8'),
+            result, content = self._cmisClient.binding.rest.get(srcUrl.encode('utf-8'),
                                          username=self._cmisClient.username,
                                          password=self._cmisClient.password,
                                          **self._cmisClient.extArgs)

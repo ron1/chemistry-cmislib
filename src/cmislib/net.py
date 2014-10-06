@@ -230,7 +230,7 @@ class CURLRESTService(RESTService):
         if username is not None:
             auth = (username, password)
 
-        hurlResponse = hurl.get(url, allow_redirects=True, auth=auth, options=options, user_agent=self.user_agent)
+        hurlResponse = hurl.get(url, auth=auth, headers=headers, options=options, user_agent=self.user_agent)
         content = hurlResponse.content
         response = self._buildHttplib2Response(hurlResponse)
         return response, content
@@ -244,11 +244,16 @@ class CURLRESTService(RESTService):
             kwargs.update(self.curlOpts)
 
         headers = {}
+        options = {}
         if kwargs:
             if 'headers' in kwargs:
                 headers = kwargs['headers']
                 del kwargs['headers']
                 self.logger.debug('Headers passed in:' + headers)
+            if 'curlOpts' in kwargs:
+                options = kwargs['curlOpts']
+                del kwargs['curlOpts']
+                self.logger.debug('CurlOpts passed in:' + str(options))
             if url.find('?') >= 0:
                 url = url + '&' + urlencode(kwargs)
             else:
@@ -256,11 +261,15 @@ class CURLRESTService(RESTService):
 
         self.logger.debug('About to do a DELETE on:' + url)
 
-        h = httplib2.Http()
-        h.add_credentials(username, password)
-        headers['User-Agent'] = self.user_agent
+        auth = None
+        if username is not None:
+            auth = (username, password)
 
-        return h.request(url, method='DELETE', headers=headers)
+        hurlResponse = hurl.delete(url, auth=auth, headers=headers, options=options,
+                                   user_agent=self.user_agent)
+        content = hurlResponse.content
+        response = self._buildHttplib2Response(hurlResponse)
+        return response, content
 
     def put(self,
             url,
@@ -281,11 +290,16 @@ class CURLRESTService(RESTService):
             kwargs.update(self.curlOpts)
 
         headers = {}
+        options = {}
         if kwargs:
             if 'headers' in kwargs:
                 headers = kwargs['headers']
                 del kwargs['headers']
                 self.logger.debug('Headers passed in:' + headers)
+            if 'curlOpts' in kwargs:
+                options = kwargs['curlOpts']
+                del kwargs['curlOpts']
+                self.logger.debug('CurlOpts passed in:' + str(options))
             if url.find('?') >= 0:
                 url = url + '&' + urlencode(kwargs)
             else:
@@ -293,14 +307,75 @@ class CURLRESTService(RESTService):
 
         self.logger.debug('About to do a PUT on:' + url)
 
-        h = httplib2.Http()
-        h.add_credentials(username, password)
-        headers['User-Agent'] = self.user_agent
+        auth = None
+        if username is not None:
+            auth = (username, password)
         if contentType is not None:
             headers['Content-Type'] = contentType
-        return h.request(url, body=payload, method='PUT', headers=headers)
+
+        hurlResponse = hurl.put(url, auth=auth, data=payload, headers=headers, options=options,
+                                user_agent=self.user_agent)
+        content = hurlResponse.content
+        response = self._buildHttplib2Response(hurlResponse)
+        return response, content
 
     def post(self,
+             url,
+             payload,
+             contentType,
+             username=None,
+             password=None,
+             **kwargs):
+
+        """
+        Makes a POST request to the URL specified and posts the payload
+        that gets passed in. The content type header gets set to the
+        specified content type.
+        """
+
+        # merge the curl options with the ones that got passed in
+        if len(self.curlOpts) > 0:
+            kwargs.update(self.curlOpts)
+
+        headers = {}
+        options = {}
+        if kwargs:
+            if 'headers' in kwargs:
+                headers = kwargs['headers']
+                del kwargs['headers']
+                self.logger.debug('Headers passed in:' + headers)
+            if 'curlOpts' in kwargs:
+                options = kwargs['curlOpts']
+                del kwargs['curlOpts']
+                self.logger.debug('CurlOpts passed in:' + str(options))
+            if url.find('?') >= 0:
+                url = url + '&' + urlencode(kwargs)
+            else:
+                url = url + '?' + urlencode(kwargs)
+
+        self.logger.debug('About to do a POST on:' + url)
+
+        auth = None
+        if username is not None:
+            auth = (username, password)
+        if contentType is not None:
+            headers['Content-Type'] = contentType
+
+        hurlResponse = hurl.post(url, auth=auth, data=payload, headers=headers, options=options,
+                                 user_agent=self.user_agent)
+        content = hurlResponse.content
+        response = self._buildHttplib2Response(hurlResponse)
+        return response, content
+
+    def _buildHttplib2Response(self, hurlResponse):
+        response = httplib2.Response(hurlResponse.headers)
+        response.update({'status': str(hurlResponse.status_code)})
+        response.status = hurlResponse.status_code
+        # TODO recursively populate the 'previous' list from hurlResponse history
+        response.previous = hurlResponse.history
+        return response
+
+    def _pycurl_post(self,
              url,
              payload,
              contentType,
@@ -355,14 +430,6 @@ class CURLRESTService(RESTService):
         c.close()
 
         return response, content
-
-    def _buildHttplib2Response(self, hurlResponse):
-        response = httplib2.Response(hurlResponse.headers)
-        response.update({'status': str(hurlResponse.status_code)})
-        response.status = hurlResponse.status_code
-        # TODO recursively populate the 'previous' list from hurlResponse history
-        response.previous = hurlResponse.history
-        return response
 
 
 class _ResponseHandler:

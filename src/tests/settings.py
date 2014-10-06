@@ -36,13 +36,14 @@ REPOSITORY_URL = 'http://localhost:8080/nuxeo/json/cmis' # Nuxeo local
 
 # Choose a binding. The AtomPubBinding is the only one you should really be using right now
 #BINDING = AtomPubBinding()
-#BINDING = BrowserBinding()
+BINDING = BrowserBinding()
 
 import pycurl
 from cmislib.net import CURLRESTService
 CURL_OPTS = {'curlOpts': [(pycurl.VERBOSE, True)]}
 RESTService = CURLRESTService(**CURL_OPTS)
-BINDING = BrowserBinding(restService=RESTService)
+#BINDING = AtomPubBinding(restService=RESTService)
+#BINDING = BrowserBinding(restService=RESTService)
 
 # CMIS repository credentials]
 #USERNAME = 'admin'  # Alfresco
@@ -68,9 +69,11 @@ TEST_PRINCIPAL_ID = 'anyone'
 #TEST_PRINCIPAL_ID = 'admin'
 # For repositories that may index test content asynchronously, the number of
 # times a query is retried before giving up.
-MAX_FULL_TEXT_TRIES = 10
+#MAX_FULL_TEXT_TRIES = 10
+MAX_FULL_TEXT_TRIES = 2
 # The number of seconds the test should sleep between tries.
-FULL_TEXT_WAIT = 10
+#FULL_TEXT_WAIT = 10
+FULL_TEXT_WAIT = 2
 # Specify the type ID of a versionable type. If all types are versionable,
 # specify cmis:document
 VERSIONABLE_TYPE_ID = 'cmis:document'
