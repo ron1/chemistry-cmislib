@@ -24,7 +24,7 @@ from cmislib.cmis_services import Binding, RepositoryServiceIfc
 from cmislib.domain import CmisId, CmisObject, ObjectType, ACL, ACE, ChangeEntry
 from cmislib.exceptions import CmisException, InvalidArgumentException,\
                                NotSupportedException, ObjectNotFoundException
-from cmislib.net import RESTService as Rest
+from cmislib.net import RESTService as Rest, DefaultRESTService as DefaultRest
 from cmislib.util import parsePropValueByType
 import json
 import logging
@@ -46,6 +46,11 @@ class BrowserBinding(Binding):
     """
 
     def __init__(self, **kwargs):
+        if kwargs.has_key('restService') and (isinstance(kwargs['restService'], Rest)):
+            self.rest = kwargs['restService']
+            del kwargs['restService']
+        else:
+            self.rest = DefaultRest(**kwargs)
         self.extArgs = kwargs
 
     def getRepositoryService(self):
@@ -68,7 +73,7 @@ class BrowserBinding(Binding):
         if len(self.extArgs) > 0:
             kwargs.update(self.extArgs)
 
-        resp, content = Rest().get(url,
+        resp, content = self.rest.get(url,
                                    username=username,
                                    password=password,
                                    **kwargs)
@@ -95,7 +100,7 @@ class BrowserBinding(Binding):
             kwargs.update(self.extArgs)
 
         result = None
-        resp, content = Rest().post(url,
+        resp, content = self.rest.post(url,
                                     payload,
                                     contentType,
                                     username=username,
@@ -1882,7 +1887,7 @@ class BrowserDocument(BrowserCmisObject):
             return None
 
         contentUrl = self._repository.getRootFolderUrl() + "?objectId=" + self.getObjectId() + "&selector=content"
-        result, content = Rest().get(contentUrl.encode('utf-8'),
+        result, content = self.rest.get(contentUrl.encode('utf-8'),
                                      self._cmisClient.username,
                                      self._cmisClient.password,
                                      **self._cmisClient.extArgs)
@@ -1961,16 +1966,11 @@ class BrowserDocument(BrowserCmisObject):
         renditions = []
 
         contentUrl = self._repository.getRootFolderUrl() + "?objectId=" + self.getObjectId() + "&cmisselector=renditions&renditionFilter=*"
-        result, content = Rest().get(contentUrl.encode('utf-8'),
-                                     self._cmisClient.username,
-                                     self._cmisClient.password,
-                                     **self._cmisClient.extArgs)
-        if result['status'] != '200':
-            raise CmisException(result['status'])
-
-        resultObj = json.loads(content)
-        for rendObj in resultObj:
-            renditions.append(BrowserRendition(rendObj))
+        result, content = self._cmisClient.binding.get(contentUrl.encode('utf-8'),
+                                                       self._cmisClient.username,
+                                                       self._cmisClient.password)
+        for res in result:
+            renditions.append(BrowserRendition(res))
 
         return renditions
 

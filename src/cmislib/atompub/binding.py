@@ -23,7 +23,7 @@ provider.
 from cmislib.cmis_services import Binding, RepositoryServiceIfc
 from cmislib.domain import CmisId, CmisObject, ObjectType, Property, ACL, ACE, ChangeEntry, ResultSet, Rendition
 from cmislib import messages
-from cmislib.net import RESTService as Rest
+from cmislib.net import RESTService as Rest, DefaultRESTService as DefaultRest
 from cmislib.exceptions import CmisException, \
     ObjectNotFoundException, InvalidArgumentException, \
     NotSupportedException
@@ -93,6 +93,11 @@ class AtomPubBinding(Binding):
     """
 
     def __init__(self, **kwargs):
+        if kwargs.has_key('restService') and (isinstance(kwargs['restService'], Rest)):
+            self.rest = kwargs['restService']
+            del kwargs['restService']
+        else:
+            self.rest = DefaultRest(**kwargs)
         self.extArgs = kwargs
 
     def getRepositoryService(self):
@@ -115,7 +120,7 @@ class AtomPubBinding(Binding):
         if len(self.extArgs) > 0:
             kwargs.update(self.extArgs)
 
-        resp, content = Rest().get(url,
+        resp, content = self.rest.get(url,
                                    username=username,
                                    password=password,
                                    **kwargs)
@@ -142,7 +147,7 @@ class AtomPubBinding(Binding):
         if len(self.extArgs) > 0:
             kwargs.update(self.extArgs)
 
-        resp, content = Rest().delete(url,
+        resp, content = self.rest.delete(url,
                                       username=username,
                                       password=password,
                                       **kwargs)
@@ -167,7 +172,7 @@ class AtomPubBinding(Binding):
         if len(self.extArgs) > 0:
             kwargs.update(self.extArgs)
 
-        resp, content = Rest().post(url,
+        resp, content = self.rest.post(url,
                                     payload,
                                     contentType,
                                     username=username,
@@ -202,7 +207,7 @@ class AtomPubBinding(Binding):
         if len(self.extArgs) > 0:
             kwargs.update(self.extArgs)
 
-        resp, content = Rest().put(url,
+        resp, content = self.rest.put(url,
                                    payload,
                                    contentType,
                                    username=username,

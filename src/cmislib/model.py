@@ -50,11 +50,12 @@ class CmisClient(object):
         self.repositoryUrl = repositoryUrl
         self.username = username
         self.password = password
-        self.extArgs = kwargs
         if kwargs.has_key('binding') and (isinstance(kwargs['binding'], Binding)):
             self.binding = kwargs['binding']
+            del kwargs['binding']
         else:
             self.binding = AtomPubBinding(**kwargs)
+        self.extArgs = kwargs
         self.logger = logging.getLogger('cmislib.model.CmisClient')
         self.logger.info('Creating an instance of CmisClient')
 
